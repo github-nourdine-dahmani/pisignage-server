@@ -54,6 +54,9 @@ apt-get install -y curl wget gnupg2 lsb-release
 # Install MongoDB
 echo -e "${YELLOW}[2/8] Installing MongoDB...${NC}"
 if ! command -v mongod &> /dev/null; then
+    # Remove any existing MongoDB repository files to avoid conflicts
+    rm -f /etc/apt/sources.list.d/mongodb-org*.list
+    
     curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
     
     # Detect Ubuntu version
@@ -77,6 +80,8 @@ if ! command -v mongod &> /dev/null; then
     
     echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu ${MONGODB_CODENAME}/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list
     
+    # Clean apt cache and update
+    apt-get clean
     if apt-get update -y && apt-get install -y mongodb-org; then
         echo -e "${GREEN}MongoDB installation successful${NC}"
     else
