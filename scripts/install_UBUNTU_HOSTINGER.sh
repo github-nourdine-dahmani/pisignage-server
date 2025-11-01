@@ -60,10 +60,29 @@ if ! command -v mongod &> /dev/null; then
     UBUNTU_VERSION=$(lsb_release -rs)
     CODENAME=$(lsb_release -cs)
     
-    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu ${CODENAME}/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+    # Map unsupported Ubuntu versions to supported LTS versions
+    # MongoDB 6.0 supports: focal (20.04), jammy (22.04)
+    # For newer versions (noble/24.04, trixie/24.10, etc.), use jammy as it's more stable
+    case "$CODENAME" in
+        focal|jammy)
+            MONGODB_CODENAME="$CODENAME"
+            ;;
+        # Ubuntu 24.04 (noble), 24.10 (trixie) and other versions -> use jammy (22.04 LTS)
+        noble|trixie|*)
+            echo -e "${YELLOW}Ubuntu ${CODENAME} (${UBUNTU_VERSION}) detected.${NC}"
+            echo -e "${YELLOW}Using jammy (22.04 LTS) repository for MongoDB compatibility...${NC}"
+            MONGODB_CODENAME="jammy"
+            ;;
+    esac
     
-    apt-get update -y
-    apt-get install -y mongodb-org
+    echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu ${MONGODB_CODENAME}/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list
+    
+    if apt-get update -y && apt-get install -y mongodb-org; then
+        echo -e "${GREEN}MongoDB installation successful${NC}"
+    else
+        echo -e "${RED}MongoDB installation failed. Please check your repository configuration.${NC}"
+        exit 1
+    fi
     
     # Create MongoDB data directory
     if [ ! -d "$DB_DIR" ]; then
