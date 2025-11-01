@@ -47,7 +47,9 @@ echo ""
 echo -e "${YELLOW}[1/8] Updating system packages...${NC}"
 apt-get update -y
 apt-get upgrade -y
-apt-get install -y curl wget gnupg2 software-properties-common
+
+# Install essential packages
+apt-get install -y curl wget gnupg2 lsb-release
 
 # Install MongoDB
 echo -e "${YELLOW}[2/8] Installing MongoDB...${NC}"
