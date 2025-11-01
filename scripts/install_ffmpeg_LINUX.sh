@@ -56,5 +56,5 @@ sudo apt-get install imagemagick
 
 #create symlink to ffmpeg and ffmprobe
 # Command creates a link for ~/bin/ffmprobe and /bin/ffmpeg 
-sudo ln -s ~/bin/ff /usr/local/bin/ffmpeg
+sudo ln -s ~/bin/ffmpeg /usr/local/bin/ffmpeg
 sudo ln -s ~/bin/ffprobe /usr/local/bin/ffprobe
