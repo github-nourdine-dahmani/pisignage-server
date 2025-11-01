@@ -43,9 +43,17 @@ NODE_VERSION="18.x"  # LTS version
 echo -e "${GREEN}Starting installation...${NC}"
 echo ""
 
+# Clean up any existing MongoDB repository files FIRST (before any apt-get update)
+echo -e "${YELLOW}Cleaning up existing MongoDB repositories...${NC}"
+rm -f /etc/apt/sources.list.d/mongodb-org*.list
+rm -f /etc/apt/sources.list.d/mongodb*.list
+# Also remove from main sources.list if present
+sed -i '/mongodb/d' /etc/apt/sources.list 2>/dev/null || true
+apt-get clean
+
 # Update system packages
 echo -e "${YELLOW}[1/8] Updating system packages...${NC}"
-apt-get update -y
+apt-get update -y 2>&1 | grep -v "mongodb" || true
 apt-get upgrade -y
 
 # Install essential packages
@@ -54,8 +62,6 @@ apt-get install -y curl wget gnupg2 lsb-release
 # Install MongoDB
 echo -e "${YELLOW}[2/8] Installing MongoDB...${NC}"
 if ! command -v mongod &> /dev/null; then
-    # Remove any existing MongoDB repository files to avoid conflicts
-    rm -f /etc/apt/sources.list.d/mongodb-org*.list
     
     curl -fsSL https://www.mongodb.org/static/pgp/server-6.0.asc | gpg -o /usr/share/keyrings/mongodb-server-6.0.gpg --dearmor
     
@@ -80,9 +86,9 @@ if ! command -v mongod &> /dev/null; then
     
     echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-6.0.gpg ] https://repo.mongodb.org/apt/ubuntu ${MONGODB_CODENAME}/mongodb-org/6.0 multiverse" | tee /etc/apt/sources.list.d/mongodb-org-6.0.list
     
-    # Clean apt cache and update
-    apt-get clean
-    if apt-get update -y && apt-get install -y mongodb-org; then
+    # Update package lists with new MongoDB repository
+    apt-get update -y
+    if apt-get install -y mongodb-org; then
         echo -e "${GREEN}MongoDB installation successful${NC}"
     else
         echo -e "${RED}MongoDB installation failed. Please check your repository configuration.${NC}"
